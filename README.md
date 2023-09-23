@@ -17,10 +17,10 @@
     data:{
         "total": 6000,
         "count": 2400 or '未开始',
-        "timer": 6.4s,
-        "gpu": 82%,
-        "complete": 84.2%,
-        "expected": '1小时21分钟'
+        "timer": '6.4s',
+        "gpu": '82%',
+        "complete": '84.2%',
+        "expected": '1小时21分钟' or '24分钟46秒' or '36秒' or '已完成'
     }
 
 ## 使用
