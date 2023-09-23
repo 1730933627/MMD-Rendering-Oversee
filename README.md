@@ -24,12 +24,12 @@
     }
 
 ## 使用
-1. 使用exe文件 [百度云下载]()
+1. 使用exe文件 [百度云下载](https://pan.baidu.com/s/1o3xwctABcvWNqp2S1nPy4w?pwd=9mc7)
    1. 双击打开oversee.exe文件，此时会弹出cmd框
    2. 输入当前目录下的某个文件，或者拖入要监视的文件夹
    3. 输入动画需要渲染的总帧数
    4. 即可开始监视
-2. 使用py文件 GitHub下载
+2. 使用py文件 [GitHub下载](https://github.com/1730933627/MMD-Rendering-Oversee)
    1. 安装所需要的拓展库
    2. 运行oversee.py文件 注意：需要在cmd里运行，在编辑器里运行会报错
    3. 转到上方使用exe文件的第二步开始
