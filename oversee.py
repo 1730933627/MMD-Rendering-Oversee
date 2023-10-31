@@ -49,7 +49,13 @@ def computeTimer() -> object:
     counter['endTime'] = time.time()
     counter['allTime'] = round(counter['endTime'] - counter['startTime'], 2)
     counter['expected'] = (counter['total'] - counter['count']) * counter['allTime']
-    if counter['expected'] >= 3600:
+    # 预计渲染时间
+    if counter['expected'] >= 86400:
+        d = counter['expected'] / 86400
+        h = counter['expected'] % 86400 / 3600
+        m = counter['expected'] % 3600 / 60
+        counter['expected'] = "{}天{}小时{}分钟".format(int(d), int(h), int(m))
+    elif counter['expected'] >= 3600:
         h = counter['expected'] / 3600
         m = counter['expected'] % 3600 / 60
         counter['expected'] = "{}小时{}分钟".format(int(h), int(m))
@@ -61,10 +67,18 @@ def computeTimer() -> object:
         counter['expected'] = "{}秒".format(int(counter['expected']))
     else:
         counter['expected'] = "渲染完毕"
-    if counter['allTime'] >= 60:
-        counter['allTime'] = "{}:{}".format(int(counter['allTime'] / 60), int(counter['allTime'] % 60))
+    # 此帧渲染时间
+    if counter['allTime'] >= 3600:
+        h = counter['allTime'] / 3600
+        m = counter['allTime'] % 3600 / 60
+        s = counter['allTime'] % 60
+        counter['allTime'] = "{}小时{}分钟{}秒".format(int(h), int(m), int(s))
+    elif counter['allTime'] >= 60:
+        m = counter['allTime'] / 60
+        s = counter['allTime'] % 60
+        counter['allTime'] = "{}分钟{}秒".format(int(m), int(s))
     else:
-        counter['allTime'] = str(counter['allTime']) + "s"
+        counter['allTime'] = str(counter['allTime']) + "秒"
     counter['startTime'] = counter['endTime']
     counter['complete'] = round(counter['count'] / counter['total'] * 100, 2)
     print(returnObj())
