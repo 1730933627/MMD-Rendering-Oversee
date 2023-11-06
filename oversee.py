@@ -15,7 +15,7 @@ class FileEventHandler(FileSystemEventHandler):
     def on_created(self, event):
         searcher = ""
         try:
-            searcher = re.findall(r"\d+", event.src_path)[0].lstrip("0")
+            searcher = re.findall(r"\d+", event.src_path.split("\\")[-1])[0].lstrip("0")
         except IndexError:
             searcher = "0"
             print("Search Error - <文件没有数字>")
