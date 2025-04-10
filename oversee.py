@@ -6,6 +6,7 @@ import threading
 from flask_cors import CORS
 from watchdog.events import *
 from watchdog.observers import Observer
+import argparse
 
 
 class FileEventHandler(FileSystemEventHandler):
@@ -25,24 +26,27 @@ class FileEventHandler(FileSystemEventHandler):
 
 
 def returnObj(methods: str = "") -> dict:
-    if methods == "post":
-        return {
-            "total": counter['total'],
-            "count": counter['count'] if counter['count'] != 0 else '未开始',
-            "timer": "{}".format(counter['allTime']),
-            "gpu": "{}%".format(pynvml.nvmlDeviceGetUtilizationRates(GPU).gpu),
-            "complete": "{}%".format(counter['complete']),
-            "expected": "{}".format(counter['expected'])
-        }
-    else:
-        return {
-            "总帧数": counter['total'],
-            "目前渲染帧数": counter['count'] if counter['count'] != 0 else '未开始',
-            "此帧渲染时间": "{}".format(counter['allTime']),
-            "GPU使用率": "{}%".format(pynvml.nvmlDeviceGetUtilizationRates(GPU).gpu),
-            "已渲染": "{}%".format(counter['complete']),
-            "预计完成时间": "{}".format(counter['expected'])
-        }
+    try:
+        if methods == "post":
+            return {
+                "total": counter['total'],
+                "count": counter['count'] if counter['count'] != 0 else '未开始',
+                "timer": "{}".format(counter['allTime']),
+                "gpu": "{}%".format(pynvml.nvmlDeviceGetUtilizationRates(GPU).gpu),
+                "complete": "{}%".format(counter['complete']),
+                "expected": "{}".format(counter['expected'])
+            }
+        else:
+            return {
+                "总帧数": counter['total'],
+                "目前渲染帧数": counter['count'] if counter['count'] != 0 else '未开始',
+                "此帧渲染时间": "{}".format(counter['allTime']),
+                "GPU使用率": "{}%".format(pynvml.nvmlDeviceGetUtilizationRates(GPU).gpu),
+                "已渲染": "{}%".format(counter['complete']),
+                "预计完成时间": "{}".format(counter['expected'])
+            }
+    except KeyError:
+        return {}
 
 
 def computeTimer() -> object:
@@ -85,14 +89,19 @@ def computeTimer() -> object:
     return counter
 
 
-def run_server(port: int = 3000):
+def run_server(port: int):
     server = flask.Flask(__name__)
     CORS(server, resources={r'/*': {"origins": "*"}}, supports_credentials=True)
 
     @server.route('/', methods=['get'])
     def getter():
         datas = returnObj()
-        text = ""
+        text = f"""
+            <div style='display:flex;padding:.5vh;'>
+                <a style='margin-right:1vh' href='/watch'><button style='font-size:1.5em;'>实时刷新</button></a>
+                <a href='/'><button style='font-size:1.5em;'>点击刷新</button></a>
+            </div>
+        """
         for line in datas:
             text += "<h1>{}:{}</h1>".format(line, datas[line])
         return text
@@ -101,8 +110,26 @@ def run_server(port: int = 3000):
     def poster():
         return json.dumps({'data': returnObj("post")}, ensure_ascii=False)
 
+    @server.route('/watch', methods=['GET'])
+    def index():
+        return f"""
+            <body>
+                <div id="status"></div>
+                <script>
+                    function updateData(){{
+                        fetch('/', {{method: 'GET',}})
+                        .then(response => response.text()).then(data => {{
+                            document.getElementById("status").innerHTML = data;
+                        }})
+                    }}
+                    setInterval(updateData, 500);
+                    updateData();
+                </script>
+            </body>
+        """
+
     print("端口:{}\n".format(port))
-    server.run(debug=False, port=port, threaded=True, host='0.0.0.0')
+    server.run(debug=bool(parser.parse_args().debug), port=port, threaded=True, host='0.0.0.0')
 
 
 def run_oversee():
@@ -110,7 +137,6 @@ def run_oversee():
     event_handler = FileEventHandler()
     observer.schedule(event_handler, dirName, True)
     observer.start()
-    print("开始监测")
     try:
         while True:
             time.sleep(1)
@@ -120,6 +146,9 @@ def run_oversee():
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--port', '-p', type=int, default=3000, help='端口号')
+    parser.add_argument('--debug', '-d', type=int, default=0, help='DEBUG(0|1)')
     dirName = input("输入文件夹名称,默认<render> : ").strip('"') or "render"
     if not os.path.exists(dirName):
         os.makedirs(dirName)
@@ -131,4 +160,4 @@ if __name__ == "__main__":
     pynvml.nvmlInit()
     GPU = pynvml.nvmlDeviceGetHandleByIndex(0)
     threading.Thread(target=run_oversee).start()
-    threading.Thread(target=run_server,).start()
+    threading.Thread(target=run_server(parser.parse_args().port)).start()
